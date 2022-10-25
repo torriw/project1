@@ -1,0 +1,472 @@
+---
+title: "Linear files"
+comment: "Step 3: Covariate evaluation"
+date: "02/21/2022" 
+output: html_notebook
+---
+
+Plan:
+
+<!-- 1.	Ensemble search for SNP candidates in gene. -->
+<!-- 2.	Run the association against covariates and endpoints -->
+3.	Automate search and extraction for p-values and the covariates that are impacting the measurement
+<!-- 4.	Rerun the association with only significant terms (plus sex and age) -->
+  <!-- a.	Specifically aimed at excluding unsignificant terms  -->
+<!-- 5.	Again, search and extract p-values -->
+<!-- 6.	Generate Report -->
+
+<!-- This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.  -->
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+steps:
+get file names
+read files (maybe one at a time in a loop)
+perform the desired action:
+  1. search file for significant p-value and report summary
+
+
+```{r}
+
+```
+
+```{r LIBRARY}
+library(dplyr)  # For pipe %>%
+
+```
+
+```{r Directory}
+home <- dirname(rstudioapi::getActiveDocumentContext()$path)
+data_dir <- paste0( home, "/Linear files/" )
+out_data <- paste0 (home, "/Output/" )
+
+```
+
+```{r get file names}
+# Get the file names and their path
+# filepaths <- list.files(path = data_dir, pattern = "*.linear", full.names = TRUE)
+filenames <- list.files(path = data_dir, pattern = "*.linear", full.names = FALSE)
+
+```
+
+Make a summary document 
+loop file names
+search for significant p-values
+  ignore (NA) 
+write a line that reports how many sig p-values
+ 
+```{r search file}
+# 
+# ### Prepare summary output file ####
+# out_name <- "Summary File.csv"
+# 
+# df_header <- data.frame()
+# 
+# df_header[1,1] <- "Welcome!"
+# df_header[1,2] <- "Processing Gene SLC44A1"
+# df_header[1,3] <- "SNPs Present: 104"  # This is not correct. It must be altered in the plink.pgen file using the SNP validation from ENSEMBLE
+# df_header[1,4] <- "Covariates: 5"
+# df_header[1,5] <- paste0( "Endpoints: ", length(filenames) )
+# df_header[2,] <- c("")  # empty line
+# # Following line must have as many elements as columns
+# df_header[3,] <- c( "Neurobehavioural Measurment", "All SNPs", "Type of model", "Any Significant Bonferroni p-value", "number of SNPs with Association" )
+# 
+# names(df_header) <- df_header[1,]; df_header <- df_header[-1,]  # Assign column names as first row then remove first row
+# #### ####
+# 
+# 
+# ##################################################
+# write_df <- data.frame()
+# for( i in filenames ){
+#   # print( paste0( "Beginning search for ", i))
+#   
+#   # Step 1: Read the file
+#   x <- read.csv( paste0( data_dir, i ), sep = "\t")
+#   sig <- which( x$P < 0.05 ) 
+#   
+#   df <- x[sig,]  # Extract only the rows that have significant p-values
+#   
+#   type_significance <- NULL
+#   # test if any ADDitive model association is present
+#   if( sjmisc::is_empty(grep( df$TEST, pattern = "ADD")) ){
+#     next
+#   } else {
+#     # type_significance <- paste( type_significance, "additive_model_present" )
+#     type_significance <- paste( type_significance, "ADD" )
+#     
+#     if( grep( df$TEST, pattern = "ADDxFASStatus=FAS" ) ){
+#       
+#     }
+#     if( !sjmisc::is_empty(grep( df$TEST, pattern = "ADDx" )) ){
+#       # type_significance <- paste( type_significance, " | interaction_present" )
+#       
+#       sig_covar <- unique(df$TEST[grep( df$TEST, pattern = "ADDxFASStatus=FAS" )])
+#       sig_covar <- paste(sig_covar, collapse = " | ")
+#       type_significance <- paste( type_significance, sig_covar, sep = " | " )
+#     }
+#   }
+#   
+#         sig_covar <- unique(df$TEST[grep( df$TEST, pattern = "ADDx" )])
+#       sig_covar <- paste(sig_covar, collapse = " | ")
+#       type_significance <- paste( type_significance, sig_covar, sep = " | " )
+# 
+#   # Write the data that you want to keep
+#   # Is the additive or the interaction present?
+#   # In which genes was this present
+#   # is there a bonferroni correction significance?
+#   
+#   ## IMPORTANT: MAKE A NEW ROW !! (using `nrow()+1`) ## Then adding data will be in sync with that row using `nrow()`
+#   write_df[ nrow(write_df) + 1, 1 ] <- stringr::str_remove(i, "plink2.") %>% stringr::str_remove(., ".glm.linear")  # the neurobehaviour measurement name
+#   write_df[ nrow(write_df), 2 ] <- paste( unique(df$ID), collapse = ", " )  # all of the variants separated by ", "
+#   write_df[ nrow(write_df), 3 ] <- type_significance
+#   # is there a bonferroni correction significance?
+#   # The p-value correction should be performed based on the number of variants tested
+#   # at present this is 120 soon to be 104
+#   # The presence of a p-value is recorded for each variable times the number of covariates. This is why I am performing a manual p-adjustment at Bonferroni n = 104.
+#   manual_qvalue <- sapply( df$P, function(x){
+#     return( p.adjust(x, method = "bonferroni", n = 104) ) 
+#   })
+#   
+#   write_df[ nrow(write_df), 4 ] <- any( manual_qvalue <= 0.05 )
+#   write_df[ nrow(write_df), 5 ] <- length(unique(df$ID))
+#   
+# }
+# ##################################################
+# 
+# sig_write_df <- write_df
+# names(sig_write_df) <- names(df_header)
+# df_out <- rbind(df_header, sig_write_df)
+# 
+# write.csv( x = df_out, 
+#            file = paste0( out_data, out_name ),
+#            row.names = FALSE)
+# 
+# # Only write the sig rows
+# ## This line will only work if the 4th column is a TRUTH boolean column
+# sig_write_df <- sig_write_df[ sig_write_df[,4] , ]
+# sig_df_out <- rbind(df_header, sig_write_df)
+# 
+# write.csv( x = sig_df_out, 
+#            file = paste0( out_data, "sig_", out_name ),
+#            row.names = FALSE)
+# 
+# 
+# # which(filenames == i)
+```
+
+
+```{r}
+### Prepare summary output file ####
+out_name <- "Summary File Test.csv"
+
+df_header <- data.frame()
+
+df_header[1,1] <- "Welcome!"
+df_header[1,2] <- "Processing Gene SLC44A1"
+df_header[1,3] <- "SNPs Present: 104"  # This is not correct. It must be altered in the plink.pgen file using the SNP validation from ENSEMBLE
+df_header[1,4] <- "Covariates: 5"
+df_header[1,5] <- paste0( "Endpoints: ", length(filenames) )
+df_header[1,6] <- ""  # Empty column for header reasons
+df_header[1,7] <- ""  # Empty column for header reasons
+
+df_header[2,] <- c("")  # empty line
+# Following line must have as many elements as columns
+df_header[3,] <- c( "Neurobehavioural Measurment", "All SNPs", "Type of model", "Any Significant Bonferroni p-value", "Significant ADDxFASStatus", "0.1 Sig ADDxFASStatus", "number of SNPs with Association" )
+
+names(df_header) <- df_header[1,]; df_header <- df_header[-1,]  # Assign column names as first row then remove first row
+#### ####
+
+# For every variant in every file perform these tests
+# 1. is the ADD model sig [if T then Keep]
+# 2. is the ADDxFAS model sig [if T then Keep]
+# 3. in those variants are there additional covariats [note additional covariate interaction effects]
+# 4. perform a bonferroni correction at n=104
+# p.adjust(0.0004807, method = "bonferroni", n = 104)  ## 0.05
+# p.adjust(0.001, method = "bonferroni", n = 104)      ## 0.104
+# This can be q-value of 0.0005  
+##################################################
+write_df <- data.frame()
+for( i in filenames ){
+  # print( paste0( "Beginning search for ", i))
+  
+  # Step 1: Read the file
+  x <- read.csv( paste0( data_dir, i ), sep = "\t")
+  
+  
+  df <- NULL
+  variant_name <- NULL
+  variant_covar <- NULL
+  variant_sig <- NULL
+  variant_ADDxFAS_sig <- NULL
+  variant_ADDxFAS_sig0.1 <- NULL
+  for( j in unique(x$ID) ){
+    df_variant <- x[x$ID==j,]
+    
+    # test if none of the p-values are significant; then skip to next variant
+    if( !any(which(df_variant$P < 0.05)) ){
+      next
+    }
+    # test if the additive and interaction with FAS is sig; if NOT then skip
+    
+    sig_add <- 
+      df_variant$P[ df_variant$TEST == "ADD" ] < 0.05
+    sig_fas <- 
+      df_variant$P[ df_variant$TEST == "ADDxFASStatus=FAS" | 
+                    df_variant$TEST == "ADDxFASStatus=CON"] < 0.05
+    # This is a NAND; will only pass if both sig_add and sig_fas are TRUE
+    
+    if( !isTRUE(sig_add & sig_fas) ) {next}  # This is a check for Logical(0)
+    if( !sig_add & sig_fas ){  
+      next
+    }
+    
+    
+    # c3 <- "ADD | ADDxFASStatus=FAS"
+    other_covar <-
+      df_variant$TEST[ df_variant$P < 0.05 ]
+    
+    # This is a missleading significance
+    sig <- any(p.adjust( df_variant$P, method = "bonferroni", n = 104 ) < 0.05)
+    ADDxFAS_sig <- any(
+      p.adjust( df_variant$P[ df_variant$TEST == "ADDxFASStatus=FAS" |
+                              df_variant$TEST == "ADDxFASStatus=CON" ],
+                method = "bonferroni", n = 104 ) < 0.05 )
+    
+    ADDxFAS_sig0.1 <- any(
+      p.adjust( df_variant$P[ df_variant$TEST == "ADDxFASStatus=FAS" |
+                              df_variant$TEST == "ADDxFASStatus=CON" ],
+                method = "bonferroni", n = 104 ) < 0.1 )
+    
+    variant_name <- c(variant_name, df_variant$ID[1])
+    variant_covar <- c(variant_covar, paste0( other_covar, collapse = ", "), 
+                       collapse = " | ")
+    variant_sig <- c(variant_sig, paste0( sig ))
+    variant_ADDxFAS_sig <- c( variant_ADDxFAS_sig, paste0( ADDxFAS_sig ))
+    variant_ADDxFAS_sig0.1 <- c( variant_ADDxFAS_sig0.1, paste0( ADDxFAS_sig0.1 ))
+    
+    # print(variant_name)
+  }
+    
+    
+  # Write the data that you want to keep
+  # Is the additive or the interaction present?
+  # In which genes was this present
+  # is there a bonferroni correction significance?
+  
+  ## IMPORTANT: MAKE A NEW ROW !! (using `nrow()+1`) ## Then adding data will be in sync with that row using `nrow()`
+  write_df[ nrow(write_df) + 1, 1 ] <- stringr::str_remove(i, "plink2.") %>% stringr::str_remove(., ".glm.linear")  # the neurobehaviour measurement NAME
+  
+  write_df[ nrow(write_df), 2 ] <- paste( variant_name, collapse = ", " )  # all of the variants separated by ", "
+  
+  write_df[ nrow(write_df), 3 ] <- paste( variant_covar, collapse = "" )  # Other Covariates
+  
+  # is there a bonferroni correction significance?
+  # The p-value correction should be performed based on the number of variants tested
+  # at present this is 120 soon to be 104
+  # The presence of a p-value is recorded for each variable times the number of covariates. This is why I am performing a manual p-adjustment at Bonferroni n = 104.
+  ##### DEPRECIATED
+  # manual_qvalue <- sapply( df$P, function(x){
+  #   return( p.adjust(x, method = "bonferroni", n = 104) ) 
+  # })
+  # write_df[ nrow(write_df), 4 ] <- any( manual_qvalue <= 0.05 )  
+  #####
+  write_df[ nrow(write_df), 4 ] <- paste( variant_sig, collapse = " | " )  # Necessary for sig_write_df
+  write_df[ nrow(write_df), 5 ] <- paste( variant_ADDxFAS_sig, collapse = " | ")
+  write_df[ nrow(write_df), 6 ] <- paste( variant_ADDxFAS_sig0.1, collapse = " | ")
+  write_df[ nrow(write_df), 7 ] <- length(unique(variant_name)) 
+  
+}
+
+
+##################################################
+
+
+sig_write_df <- write_df
+names(sig_write_df) <- names(df_header)
+df_out <- rbind(df_header, sig_write_df)
+
+write.csv( x = df_out, 
+           file = paste0( out_data, out_name ),
+           row.names = FALSE)
+
+### THIS... I don't even know
+# Only write the sig rows
+## This line will only work if the 4th column is a TRUTH boolean column
+sig_write_df <- sig_write_df[ c( 
+                                grep(write_df[,4], pattern = "TRUE")
+                                ), ]
+sig_df_out <- rbind(df_header, sig_write_df)
+
+write.csv( x = sig_df_out,
+           file = paste0( out_data, "sig_", out_name ),
+           row.names = FALSE)
+##################################################
+
+```
+
+#############
+WORKING and unfinished
+LD analysis
+```{r}
+library(LDheatmap)
+
+# the second column has the rs names
+write_df$V2
+
+length(unique(write_df$V2))
+
+length(unlist(stringr::str_split(write_df$V2[1], ", ")))
+
+# a <- sapply( write_df$V2, function(x){
+#   return( 
+#     length(
+#     unlist(stringr::str_split(x, ", "))
+#     )
+#   )
+# })
+
+a <- NULL
+for( i in write_df$V2 ){
+  a <- c( a, length(unlist(stringr::str_split(i, ", "))) )
+}
+
+max_variants <- which(a == max(a))
+
+mv <- write_df$V2[max_variants]
+# length(unique(mv))  # All of these are identical
+ld_subset <- mv[1]
+ld_set <- unique(mv)
+
+
+#snp genotypes of 254 individuals
+#gsub("[[:blank:]]+", ",",<snp>) separating spaces with commas 
+
+rs79971185<-c('GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','AG','GA','GA','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','AG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','AG','GG','GG','GG','GA','GG','GG','AG','GG','GG','GG','GG','GG','GG','GG','GG','GG','AG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GA','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GA','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GA','GG','GG','GA','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GA','GG','GG','GG','GG','GG','GG','GG','GA','GG','GG','GG','GG','GG','GG','AG','GG','GG','GG','GG','AA','GG','GG','GA','GG','GG','GG','GG','GG','GG','GG','GG','GA','GG','GG','GG','GG','GG','GG','GG','GG','GG','GA','GG','GG','GG','GG','GG','AG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','AG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','AG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','AG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG','GG')
+
+rs79223354<-c('AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AG','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AG','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA',NA,'AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA',NA,'AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AG','AA','AA','AA',NA,'AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','GG','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA')
+
+rs76054992<-c('AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AG','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AG','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA',NA,'AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA',NA,'AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','GG','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA')
+
+rs143438338<-c('AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','GG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA')
+
+rs59370172<-c('CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','TC','CC','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','TC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','CC','CC','CC','CC',NA,'CC','CC','CC','CC','CC','CC','TC','CC','CC','CC','CC',NA,'CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','TC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','TC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','TC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC')
+
+rs75106836<-c('TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','CT','TT','TC','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','CT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TC','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TC','TT','TT','TC','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TC','TT','TT','TT','TT','TT','TT','TT','TC','TT','TT','TT','TT','TT','TT','CT','TT','TT','TT','TT','CC','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TC','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','CT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','CT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','CT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT')
+
+rs10991629<-c('TC','TC','CC','CC','CT','CC','CC','CC','CT','CC','TC','TT','CT','CC','CC','TC','CC','CC','CT','CC','TC','CC','CT','CC','CT','TC','CC','TC','TC','CC','TC','CC','CC','CC','TC','CT','TC','CC','CC','CC','CC','TC','CC','CC','TT','CC','CT','CC','TC','CC','CC','TC','CC','CC','CC','CT','CT','CT','CC','CC','CC','CT','CC','CT','CC','CC','CC','CT','CC','CT','CC','TT','TC','CC','CC','CC','CC','TT','CC','CT','CC','TC','CC','TC','CC','CC','CT','CC','CC','CC','CC','CC','CC',NA,'CC','CT','TT','CC','CC','CT','TC','CT','CC','TT','TT','TT','CC','CC','CT','TC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','TC','TC','CC','CT','CC','TT','CT','CT','CC','CC','CC','CC','CT','CC','CC','CT','TC','CC','CC','TC','TC','CC','CC','CC','TC','CT','TC','CC','CT','CC','CC','CC','CC','TC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CT','CT','CC','TC','CC','TT','CC','CC','TC','TC','CC','CC','CC','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','TC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','CC','CC','TC','CC','CC','CC','TC','CC','CT','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','TC','CC','CC','CC','TC','CT','CC','CC','TC','CC','CC','CC','TC','CC','TC','CC','CC','CC','CC','CC','CT','CC','CC','CT')
+
+rs3199966<-c('GT','GT','TT','TT','TG','TT','TT','TT','TG','TT','GT','GG','TG','TT','TT','GT','TT','TT','TG','TT','TT','TT','TG','TG','TT','GT','TT','GT','TG','TT','GT','TT','TT','TT','GG','TG','GT','TT','TG','GT','TT','GT','TT','TT','TG','TT','TG','TT','GT','TT','TT','TT','TT','TT','TT','TT','TG','TG','TT','TT','TT','TT','TT','TG','TT','TT','TG','TG','TT','TG','TT','GG','TT','TT','TT','TT','TT','TT','TT','TT','TT','GT','TT','GG','TT','TT','TT','TT','TT','GT','TT','TT','TT',NA,'TT','TT','GG','TT','TT','GG','GT','TG','TT','GG','GG','GG','TT','TT','TG','GT','TT','TT','TT','TT','TT','TT','TT','GT','TT','TT','GT','GT','GT','TT','GT','GG','TG','TG','TT','TT','TG','TT','TT','GT','TT','TG','GT','TT','TT','GT','GT','TT','TT','TT','TT','TG','GT','TT','TG','TT','TT','TT','TT','GT','TT','TT','TT','TG','TT','TT','TT','TT','TT','TT','TT','TT','TT','GG','TT','TT','TG','TG','TT','GT','GT','GG','TT','TT','GT','GT','TT','TT','TT','TG','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','TT','GT','TT','TT','TT','TT','TT','TT','TG','TT','TT','TT','TT','TT','GT','TT','TT','TT','GT','TT','TG','TG','TT','TT','TT','TT','TT','TT','TT','TT','TT','TG','TT','TT','TT','GT','TT','TT','TT','TT','TG','TT','TT','GT','TT','TT','TT','GT','TT','GT','TT','TT','TT','TT','TT','TG','TT','TT','TG')
+
+rs2771040<-c('GA','GA','AA','AA','AG','AA','AA','AA','AG','AA','GA','GG','AG','AA','AA','GA','AA','AA','AG','AA','GA','AA','AG','AG','AG','GA','AA','GA','GG','AA','GA','AA','AA','AA','GG','AG','GA','AA','AG','GA','AA','GA','AA','AA','GG','AA','AG','AA','GA','AA','AA','AA','AA','AA','AA','AA','AG','AG','AA','AA','AA','AG','AA','AG','AA','AA','AG','AG','AA','AG','AA','GG','AA','AA','AA','AA','AA','AG','AA','AA','AA','GA','AA','GG','AA','AA','AG','AA','AA','GA','AA','AA','AA',NA,'AA','AG','GG','AA','AA','GG','GA','AG','AA','GG','GG','GG','AA','AA','AG','GA','AA','AA','AA','AA','AA','AA','AA','GA','AA','AA','GA','GA','GA','AG','GA','GG','AG','AG','AA','AA','AG','AA','AG','GA','AA','AG','GA','AA','AA','GA','GA','AA','AA','AA','GA','AG','GA','AA','AG','AA','AA','AA','AA','GA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','GG','AA','AA','AG',NA,'AA','GA','GA','GG','AA','AA','GA','GA','AA','AA','AA','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','GA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','AA','AA','GA','AA','AA','AA','GA','AA','AG','AG','AA','AA','AA','AA','AA','AA','AA','AA','AA','AG','AA','AA','AA','GA','AA','AA','AA','GA','AG','AA','AA','GA','AA','AA','AA','GA','AA','GA','AA','AA','AA','AA','AA','AG','AA','AA','AG')
+
+
+#alleles to factors
+require(genetics)
+rs79971185 <- genetics::as.genotype(rs79971185, sep = "")
+rs79223354 <- genetics::as.genotype(rs79223354, sep = "")
+rs76054992 <- genetics::as.genotype(rs76054992, sep = "")
+rs143438338 <- genetics::as.genotype(rs1434383, sep = "")
+rs59370172 <- genetics::as.genotype(rs59370172, sep = "")
+rs75106836 <- genetics::as.genotype(rs7510683, sep = "")
+rs10991629 <- genetics::as.genotype(rs10991629, sep = "")
+rs3199966 <- genetics::as.genotype(rs3199966, sep = "")
+rs2771040 <- genetics::as.genotype(rs2771040, sep = "")
+
+
+#create snp data frame
+ld_df <- data.frame(rs79971185 = rs79971185, rs79223354 = rs79223354, rs76054992 = rs76054992, rs59370172 = rs59370172, rs75106836 = rs75106836, rs10991629 = rs10991629, rs143438338 = rs143438338, rs3199966 = rs3199966, rs2771040 = rs2771040)
+
+
+
+#create distance vector
+pos <-c(108015001L,108037029L,108042090L,108043913L,108048172L,108053683L,108094256L,108147763L,108152199L)
+pos<-as.numeric(pos)
+
+####unsuccessful#######
+#gdat<- NULL
+#gdat<- as.matrix(ld_df)
+#class(gdat)<-'numeric'
+#require(snpStats)
+#gdat <-as(gdat,"SnpMatrix") 
+########################
+
+
+#LDheatmap analysis
+
+library(LDheatmap)
+MyHeatmap <- LDheatmap(ld_df,pos, LDmeasure="r",
+title ="Pairwise LD in r^2", add.map=TRUE,
+SNP.name = c("rs76054992","rs143438338","rs2771040"),
+color=grey.colors(20), name="myLDgrob",
+add.key=TRUE)
+
+
+
+```
+
+
+
+
+```{r}
+##########################################
+#Editing heatmap for better visualization
+# require(grid)
+# new.grob <- editGrob(MyHeatmap$LDheatmapGrob, gPath("geneMap","SNPnames"), gp = gpar(cex=0.9))
+# grid.draw(new.grob)
+# bullet<-grid.edit("symbols", pch = 20, gp = gpar(cex = 1))
+# grid.draw(bullet)
+#Final plot in ld_analysis folder
+
+##########################################
+
+
+#create snp data frame (version2)
+ld_df2<- data.frame(rs79971185 = rs79971185, rs76054992 = rs76054992,rs3199966 = rs3199966, rs59370172 = rs59370172,  rs79223354 = rs79223354, rs75106836 = rs75106836, rs10991629 = rs10991629, rs143438338 = rs143438338, rs2771040 = rs2771040)
+
+#create distance vector
+pos2<-c(108015001L,108037029L,108042090L,108043913L,108048172L,108053683L,108094256L,108147763L,108152199L)
+pos2<-as.numeric(pos2)
+``
+#LDheatmap analysis
+library(LDheatmap)
+MyHeatmap2<- LDheatmap(ld_df2,pos2, LDmeasure="r",
+title ="Pairwise LD in r^2", add.map=TRUE,
+SNP.name = c("rs76054992","rs143438338","rs2771040"),
+color=grey.colors(20), name="myLDgrob",
+add.key=TRUE)
+```
+
+
+```{r}
+##############################
+#LDheatmap analysis
+library(LDheatmap)
+MyHeatmap3<- LDheatmap(ld_df,pos, LDmeasure="r",
+title ="Pairwise LD in r^2", add.map=TRUE,
+SNP.name =c("rs10991629","rs79971185","rs79223354","rs76054992","rs59370172","rs75106836","rs143438338","rs3199966","rs2771040"),
+color=grey.colors(20), name="myLDgrob",
+add.key=TRUE)
+
+```
+```{r}
+Ex_mark<-LDheatmap.marks(MyHeatmap3,8,9,cex=1.6, col="blue")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
